@@ -27,7 +27,7 @@ function App() {
 
     try {
       const recipients = formData.recipients.split(',').map(email => email.trim());
-      const response = await fetch('https://email-sender-server-zz.vercel.app/api/send-emails', {
+      const response = await fetch('https://email-sender-server-bay.vercel.app/api/send-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
