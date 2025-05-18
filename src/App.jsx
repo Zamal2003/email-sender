@@ -4,18 +4,18 @@ import './App.css';
 function App() {
   // Generate 100 email addresses
   const generateEmails = () => {
-    // const emails = [];
-    // for (let i = 1; i <= 100; i++) {
-    //   emails.push(`user${i}@example.com`);
-    // }
-    // return emails.join(', ');
+    const emails = [];
+    for (let i = 1; i <= 100; i++) {
+      emails.push(`user${i}@example.com`);
+    }
+    return emails.join(', ');
   };
 
   const [formData, setFormData] = useState({
     sender: '',
     recipients: generateEmails(), // Pre-fill with 100 emails
     subject: '',
-    body: ''
+    body: '',
   });
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -26,30 +26,35 @@ function App() {
     setMessage({ text: '', type: '' });
 
     try {
-      const recipients = formData.recipients.split(',').map(email => email.trim());
+      const recipients = formData.recipients.split(',').map((email) => email.trim());
       const response = await fetch('https://email-sender-server-bay.vercel.app/api/send-emails', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           sender: formData.sender,
           recipients,
           subject: formData.subject,
-          body: formData.body
-        })
+          body: formData.body,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
       }
 
       const data = await response.json();
       setMessage({ text: data.message || 'Emails sent successfully', type: 'success' });
       console.log('Success:', data);
     } catch (error) {
-      setMessage({ text: 'Failed to send emails: ' + error.message, type: 'error' });
-      console.error('Fetch error:', error.message);
+      let errorMessage = 'Failed to send emails: ' + error.message;
+      if (error.message.includes('Not allowed by CORS')) {
+        errorMessage = 'CORS error: The server is not allowing requests from this origin. Please check the backend configuration.';
+      }
+      setMessage({ text: errorMessage, type: 'error' });
+      console.error('Fetch error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +96,7 @@ function App() {
             onChange={handleChange}
             placeholder="recipient@example.com"
             required
-            className="recipients-textarea" // Custom class for reduced size
+            className="recipients-textarea"
           />
           <span className="error-message">Please enter at least one recipient.</span>
         </div>
