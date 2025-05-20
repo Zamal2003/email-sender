@@ -21,47 +21,48 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    setIsLoading(true);
-    setMessage({ text: '', type: '' });
+  event.preventDefault();
+  setIsLoading(true);
+  setMessage({ text: '', type: '' });
 
-    try {
-      const recipients = formData.recipients.split(',').map((email) => email.trim());
-      const response = await fetch('https://email-sender-server-bay.vercel.app/api/send-emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender: formData.sender,
-          recipients,
-          subject: formData.subject,
-          body: formData.body,
-        }),
-      });
+  try {
+    const recipients = formData.recipients.split(',').map((email) => email.trim());
+    const response = await fetch('http://localhost:5000/api/send-emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: formData.sender,
+        recipients,
+        subject: formData.subject,
+        body: formData.body,
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("my response is ",data)
-      setMessage({ text: data.message || 'Emails sent successfully', type: 'success' });
-      console.log('Success:', data);
-    } catch (error) {
-      console.log("my error is ", error)
-      let errorMessage = 'Failed to send emails: ' + error.message;
-      if (error.message.includes('Not allowed by CORS')) {
-        errorMessage = 'CORS error: The server is not allowing requests from this origin. Please check the backend configuration.';
-      }
-      setMessage({ text: errorMessage, type: 'error' });
-      console.error('Fetch error:', error);
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
     }
-  };
 
+    const data = await response.json();
+    console.log('Success:', data);
+    setMessage({ text: data.message || 'Emails sent successfully', type: 'success' });
+  } catch (error) {
+    console.error('Fetch error:', error);
+    let errorMessage = 'Failed to send emails: ' + error.message;
+    if (error.message.includes('Not allowed by CORS')) {
+      errorMessage = 'CORS error: Ensure the backend allows requests from http://localhost:5173';
+    } else if (error.message.includes('400')) {
+      errorMessage = 'Bad request: Check sender email, recipients, subject, or body for errors.';
+    } else if (error.message.includes('500')) {
+      errorMessage = 'Server error: Check backend logs for SMTP or MongoDB issues.';
+    }
+    setMessage({ text: errorMessage, type: 'error' });
+  } finally {
+    setIsLoading(false);
+  }
+};
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
