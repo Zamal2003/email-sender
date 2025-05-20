@@ -46,9 +46,11 @@ function App() {
       }
 
       const data = await response.json();
+      console.log("my response is ",data)
       setMessage({ text: data.message || 'Emails sent successfully', type: 'success' });
       console.log('Success:', data);
     } catch (error) {
+      console.log("my error is ", error)
       let errorMessage = 'Failed to send emails: ' + error.message;
       if (error.message.includes('Not allowed by CORS')) {
         errorMessage = 'CORS error: The server is not allowing requests from this origin. Please check the backend configuration.';
